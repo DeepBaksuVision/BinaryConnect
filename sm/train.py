@@ -4,7 +4,7 @@ import torch.optim as optim
 from sm.data_loader import data_loader
 from tqdm import tqdm
 import argparse
-from sm.model.ops import MLP
+from sm.model.ops import MLP, CNN
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -45,7 +45,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader = data_loader()[0]
 
-    model = MLP()
+    model = CNN()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     for epoch in range(1, args.epochs + 1):
