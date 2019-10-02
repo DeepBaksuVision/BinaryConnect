@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sm.data_loader import data_loader
+from data_loader import data_loader
 from tqdm import tqdm
 import argparse
-from sm.model.ops import MLP, CNN
+from model.ops import MLP, CNN
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -24,6 +24,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--model', type=str, default='MLP')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
@@ -45,7 +46,11 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader = data_loader()[0]
 
-    model = CNN()
+    if args.model == 'CNN':
+        model = CNN()
+    if args.model == 'MLP':
+        model = MLP()
+
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     for epoch in range(1, args.epochs + 1):
