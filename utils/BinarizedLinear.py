@@ -2,8 +2,7 @@ import copy
 import torch
 import torch.nn.functional as F
 
-
-class BinaryLinear(torch.nn.Linear):
+class BinarizedLinear(torch.nn.Linear):
 
     def __init__(self, in_features, out_features, bias=True, mode="Stocastic"):
         super().__init__(in_features, out_features, bias)
