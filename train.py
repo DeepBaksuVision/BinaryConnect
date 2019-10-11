@@ -7,23 +7,33 @@ import argparse
 from models.mlp import MLP
 from models.conv import CNN
 from models.resnet import ResNet50
+from torchvision.models import ResNet
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
+    # calculate accuracy of predictions in the current batch
+    correct, total = 0, 0
     for i, (data, target) in tqdm(enumerate(train_loader, 0)):
         data = data.to(device)
         target = target.to(device)
         optimizer.zero_grad()
-        output = model(data)
+        outputs = model(data)
         criterion = nn.CrossEntropyLoss()
-        loss = criterion(output, target)
+
+        _, predicted = (torch.max(outputs.data, 1))
+
+        total += target.size(0)
+        correct += (predicted == target).sum().item()
+        train_acc = 100. * correct / total
+
+        loss = criterion(outputs, target)
         loss.backward()
         optimizer.step()
         if i % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tAccuracy: {:.6f}\tLoss: {:.6f}'.format(
                 epoch, i * len(data), len(train_loader.dataset),
-                       100. * i / len(train_loader), loss.item()))
+                       100. * i / len(train_loader), train_acc, loss.item()))
 
 
 def main():
@@ -33,7 +43,7 @@ def main():
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=1, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                         help='learning rate (default: 0.01)')
@@ -75,3 +85,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
