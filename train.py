@@ -28,7 +28,7 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='MLP')
-    parser.add_argument('--bnn_type', type=str, default='Stocastic')
+    parser.add_argument('--bnn_type', type=str, default='Stochastic')
     parser.add_argument('--dataset', type=str, default='CIFAR-10')
     parser.add_argument('--batch_size', type=int, default=16, metavar='N',
                         help='input batch size for training (default: 64)')
@@ -56,7 +56,7 @@ def main():
     elif args.model == 'MLP':
         model = MLP()
     elif args.model == 'BNN':
-        if args.bnn_type == "Stocastic" or args.bnn_type == "Deterministic":
+        if args.bnn_type == "Stochastic" or args.bnn_type == "Deterministic":
             model = Binarized_MLP(args.bnn_type)
         else:
             raise RuntimeError("not supported quantization method")

@@ -16,7 +16,7 @@ class BinarizedLinear(torch.nn.Linear):
 
     def weight_binarization(self, weight: torch.tensor, mode:str):
         with torch.set_grad_enabled(False):
-            if mode == "Stocastic":
+            if mode == "Stochastic":
                 bin_weight = self.stocastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
