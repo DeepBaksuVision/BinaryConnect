@@ -30,7 +30,7 @@ def main():
         raise RuntimeError("not supported quantization method")
 
     analysis = tune.run(
-        train, config={"model": model,
+        train_bnn, config={"model": model,
                        "epoch": args.epochs,
                        "lr": tune.grid_search([0.0001, 0.001, 0.01, 0.1]),
                        "momentum": tune.grid_search([0.3, 0.5, 0.9, 0.99])
