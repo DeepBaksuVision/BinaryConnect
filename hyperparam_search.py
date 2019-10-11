@@ -5,7 +5,7 @@ from models.binarized_mlp import Binarized_MLP
 from ray import tune
 from ray.tune.examples.mnist_pytorch import get_data_loaders, test, train
 
-def train(config):
+def train_bnn(config):
     model = config["model"]
     epoch = config["epoch"]
 
