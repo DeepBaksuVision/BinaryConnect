@@ -1,6 +1,6 @@
 import torch
 from models.resnet import ResNet50
-from dataloader.data_loader import data_loader
+from dataloader.data_loader import test_loader
 import argparse
 
 if __name__ == "__main__":
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     device = torch.device("cuda" if args.cuda else "cpu")
 
-    test_loader = data_loader()[1]
+    test_loader = test_loader()
     correct = 0
     total = 0
     model = ResNet50()
