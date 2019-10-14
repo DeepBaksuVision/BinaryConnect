@@ -48,4 +48,5 @@ class BinarizedLinear(torch.nn.Linear):
         with torch.set_grad_enabled(False):
             weight = torch.clamp(weight, -1, 1)
         weight.requires_grad = True
+
         return weight

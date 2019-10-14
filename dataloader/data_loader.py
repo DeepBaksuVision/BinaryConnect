@@ -5,7 +5,6 @@ import torchvision.transforms as transforms
 
 def data_loader(dataset="CIFAR-10", batch_size = 16):
 
-
     if dataset == "CIFAR-10":
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
