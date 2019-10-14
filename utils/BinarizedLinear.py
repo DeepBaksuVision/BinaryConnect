@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class BinarizedLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, bias=True, mode="Stocastic"):
+    def __init__(self, in_features, out_features, bias=True, mode="Stochastic"):
         super().__init__(in_features, out_features, bias)
         self.mode = mode
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
