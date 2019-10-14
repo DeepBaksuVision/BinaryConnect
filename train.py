@@ -1,19 +1,20 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from dataloader.data_loader import data_loader
+from dataloader.data_loader import train_valid_loader
+from dataloader.data_loader import test_loader
 from tqdm import tqdm
 import argparse
+import numpy as np
 from models.mlp import MLP
 from models.conv import CNN
 from models.resnet import ResNet50
-from torchvision.models import ResNet
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     # calculate accuracy of predictions in the current batch
-    correct, total = 0, 0
+    correct, running_loss, total = 0, 0, 0
     for i, (data, target) in tqdm(enumerate(train_loader, 0)):
         data = data.to(device)
         target = target.to(device)
@@ -23,17 +24,19 @@ def train(args, model, device, train_loader, optimizer, epoch):
 
         _, predicted = (torch.max(outputs.data, 1))
 
-        total += target.size(0)
-        correct += (predicted == target).sum().item()
-        train_acc = 100. * correct / total
-
         loss = criterion(outputs, target)
         loss.backward()
         optimizer.step()
+
+        total += target.size(0)
+        correct += (predicted == target).sum().item()
+        train_acc = 100. * correct / total
+        running_loss += loss.item()
         if i % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tAccuracy: {:.6f}\tLoss: {:.6f}'.format(
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tAccuracy: {:.2f}\tLoss: {:.2f}'.format(
                 epoch, i * len(data), len(train_loader.dataset),
-                       100. * i / len(train_loader), train_acc, loss.item()))
+                100. * i / len(train_loader), train_acc, running_loss / 10))
+            running_loss = 0.0
 
 
 def main():
@@ -53,7 +56,6 @@ def main():
                         help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-
     parser.add_argument('--save_model', action='store_true', default=False,
                         help='For Saving the current Model')
     parser.add_argument('--cuda', action='store_true',
@@ -65,7 +67,7 @@ def main():
             print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
     device = torch.device("cuda" if args.cuda else "cpu")
-    train_loader = data_loader()[0]
+    train_loader = train_valid_loader()[0]
 
     # if args.model == 'CNN':
     #     model = CNN()
