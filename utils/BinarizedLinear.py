@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class BinarizedLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, bias=True, mode="Stocastic"):
+    def __init__(self, in_features, out_features, bias=True, mode="Stochastic"):
         super().__init__(in_features, out_features, bias)
         self.mode = mode
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
@@ -48,4 +48,5 @@ class BinarizedLinear(torch.nn.Linear):
         with torch.set_grad_enabled(False):
             weight = torch.clamp(weight, -1, 1)
         weight.requires_grad = True
+
         return weight
