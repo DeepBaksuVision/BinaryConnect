@@ -1,16 +1,16 @@
 import torch
 import torch.nn as nn
 
-from utils.BinaryLinear import BinaryLinear
+from utils.BinarizedLinear import BinarizedLinear
 
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.fc1 = BinaryLinear(28 * 28, 512, bias=False, mode="Stocastic")
+class Binarized_MLP(nn.Module):
+    def __init__(self, mode):
+        super(Binarized_MLP, self).__init__()
+        self.fc1 = BinarizedLinear(28 * 28, 512, bias=False, mode=mode)
         self.batch1 = nn.BatchNorm1d(512)
-        self.fc2 = BinaryLinear(512, 512, bias=False, mode="Stocastic")
+        self.fc2 = BinarizedLinear(512, 512, bias=False, mode=mode)
         self.batch2 = nn.BatchNorm1d(512)
-        self.fc3 = BinaryLinear(512, 10, bias=False, mode="Stocastic")
+        self.fc3 = BinarizedLinear(512, 10, bias=False, mode=mode)
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, x):
