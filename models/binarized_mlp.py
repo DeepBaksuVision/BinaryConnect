@@ -75,7 +75,9 @@ class Binarized_MLP(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Binarized_MLP()
+    model.to(device)
     model.summary()
     trainer = Trainer()
     trainer.fit(model)
