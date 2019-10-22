@@ -4,14 +4,17 @@ import torch.nn.functional as F
 
 class BinarizedLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, bias=True, mode="Stochastic"):
+    def __init__(self, in_features, out_features, device: torch.device, bias=True, mode="Stochastic"):
         super().__init__(in_features, out_features, bias)
         self.mode = mode
+        self.device = device
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
+        self.bin_weight = self.bin_weight.to(self.device)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         self.clipping_weight(self.weight)
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
+        self.bin_weight = self.bin_weight.to(self.device)
         return F.linear(input, self.bin_weight, self.bias)
 
     def weight_binarization(self, weight: torch.tensor, mode:str):

@@ -11,15 +11,15 @@ from torchvision.datasets import MNIST
 from utils.BinarizedLinear import BinarizedLinear
 
 class Binarized_MLP(pl.LightningModule):
-    def __init__(self, mode="Stochastic"):
+    def __init__(self, device, mode="Stochastic"):
         super(Binarized_MLP, self).__init__()
-        self.fc1 = BinarizedLinear(28 * 28, 512, bias=False, mode=mode)
+        self.fc1 = BinarizedLinear(28 * 28, 512, bias=False, mode=mode, device=device)
         self.dropout = nn.Dropout(0.2)
         self.batch1 = nn.BatchNorm1d(512)
-        self.fc2 = BinarizedLinear(512, 512, bias=False, mode=mode)
+        self.fc2 = BinarizedLinear(512, 512, bias=False, mode=mode, device=device)
         self.dropout = nn.Dropout(0.2)
         self.batch2 = nn.BatchNorm1d(512)
-        self.fc3 = BinarizedLinear(512, 10, bias=False, mode=mode)
+        self.fc3 = BinarizedLinear(512, 10, bias=False, mode=mode, device=device)
 
     def forward(self, x):
         x = x.view(-1, 28 * 28)
@@ -76,7 +76,7 @@ class Binarized_MLP(pl.LightningModule):
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = Binarized_MLP()
+    model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
     trainer = Trainer()
