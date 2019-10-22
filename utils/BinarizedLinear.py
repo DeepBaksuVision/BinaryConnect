@@ -9,12 +9,10 @@ class BinarizedLinear(torch.nn.Linear):
         self.mode = mode
         self.device = device
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
-        self.bin_weight = self.bin_weight.to(self.device)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         self.clipping_weight(self.weight)
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
-        self.bin_weight = self.bin_weight.to(self.device)
         return F.linear(input, self.bin_weight, self.bias)
 
     def weight_binarization(self, weight: torch.tensor, mode:str):
