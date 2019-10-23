@@ -51,3 +51,33 @@ class BinarizedLinear(torch.nn.Linear):
         weight.requires_grad = True
 
         return weight
+
+
+if __name__ == "__main__":
+    import os
+    import torch.optim as optim
+    import torch.nn as nn
+    import torchvision.transforms as transforms
+    from torch.utils.data import DataLoader
+    from torchvision.datasets import MNIST
+    from tqdm import tqdm
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = BinarizedLinear(5, 1, bias=False, mode="Stochastic", device=device)
+    model.to(device)
+    dataloader = DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=32)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    for i, (data, target) in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
+        optimizer.zero_grad()
+
+        data = data.to(device)
+        target = target.to(device)
+
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        print("Loss : {}".format(loss))
+
+
