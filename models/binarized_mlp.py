@@ -62,7 +62,7 @@ class Binarized_MLP(pl.LightningModule):
 
     @pl.data_loader
     def train_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=32)
+        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=128)
 
     @pl.data_loader
     def val_dataloader(self):
@@ -75,9 +75,10 @@ class Binarized_MLP(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
+    gpus = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
-    trainer = Trainer()
+    trainer = Trainer(gpus=2, distributed_backend='ddp')
     trainer.fit(model)
