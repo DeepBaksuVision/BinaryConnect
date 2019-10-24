@@ -80,5 +80,6 @@ if __name__ == "__main__":
     model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
-    trainer = Trainer(gpus=2, distributed_backend='ddp')
+    trainer = Trainer(max_nb_epochs=1, train_percent_check=0.1)
     trainer.fit(model)
+    trainer.test(model)
