@@ -32,7 +32,7 @@ class BinarizedLinear(torch.nn.Linear):
     def deterministic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             bin_weight = weight.sign()
-        return bin_weight_cuda
+        return bin_weight
 
     def stocastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
