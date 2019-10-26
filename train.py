@@ -69,6 +69,6 @@ def main():
     if (args.save_model):
         torch.save(model.state_dict(), "CIFAR-10_MLP.pt")
 
-        
+
 if __name__ == "__main__":
     main()
