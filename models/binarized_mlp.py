@@ -91,12 +91,12 @@ if __name__ == "__main__":
         prefix='',
         save_weights_only= True
     )
-
     gpus = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
+
     trainer = Trainer(checkpoint_callback=checkpoint_callback,
                       max_nb_epochs=1, train_percent_check=0.1)
     trainer.fit(model)
