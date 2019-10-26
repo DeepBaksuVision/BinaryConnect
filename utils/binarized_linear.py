@@ -20,7 +20,7 @@ class BinarizedLinear(torch.nn.Linear):
     def weight_binarization(self, weight: torch.tensor, mode:str):
         with torch.set_grad_enabled(False):
             if mode == "Stochastic":
-                bin_weight = self.stochastic(weight)
+                bin_weight = self.stocastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
             else:
@@ -34,7 +34,7 @@ class BinarizedLinear(torch.nn.Linear):
             bin_weight = weight.sign()
         return bin_weight
 
-    def stochastic(self, weight: torch.tensor) -> torch.tensor:
+    def stocastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
             uniform_matrix = torch.empty(p.shape).uniform_(0,1)

@@ -8,32 +8,42 @@ from torchsummary import summary
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
-<<<<<<< HEAD
+from utils.binarized_conv import BinarizedConv2d
 from utils.binarized_linear import BinarizedLinear
-=======
-from utils.BinarizedLinear import BinarizedLinear
->>>>>>> develop
 
 
-class Binarized_MLP(pl.LightningModule):
+class Binarized_CONV(pl.LightningModule):
     def __init__(self, device, mode="Stochastic"):
-        super(Binarized_MLP, self).__init__()
-        self.fc1 = BinarizedLinear(28 * 28, 512, bias=False, mode=mode, device=device)
+        super(Binarized_CONV, self).__init__()
+        self.conv1 = BinarizedConv2d(in_channels=1,
+                                     out_channels=64,
+                                     kernel_size=7,
+                                     bias=False,
+                                     mode="Stochastic",
+                                     device=device)
         self.dropout = nn.Dropout(0.2)
-        self.batch1 = nn.BatchNorm1d(512)
-        self.fc2 = BinarizedLinear(512, 512, bias=False, mode=mode, device=device)
+        self.conv2 = BinarizedConv2d(in_channels=64,
+                                     out_channels=128,
+                                     kernel_size=7,
+                                     bias=False,
+                                     mode="Stochastic",
+                                     device=device)
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.fc1 = BinarizedLinear(8 * 8 * 128, 512, bias=False, mode=mode, device=device)
         self.dropout = nn.Dropout(0.2)
-        self.batch2 = nn.BatchNorm1d(512)
-        self.fc3 = BinarizedLinear(512, 10, bias=False, mode=mode, device=device)
+        self.fc2 = BinarizedLinear(512, 10, bias=False, mode=mode, device=device)
+        self.relu = nn.ReLU()
+        self.tanh = nn.Tanh()
 
     def forward(self, x):
-        x = x.view(-1, 28 * 28)
-        x = torch.sigmoid(self.fc1(x))
-        x = self.batch1(x)
-        x = torch.sigmoid(self.fc2(x))
-        x = self.batch2(x)
+        x = self.relu(self.conv1(x))
         x = self.dropout(x)
-        x = self.fc3(x)
+        x = self.relu(self.conv2(x))
+        x = self.maxpool(x)
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc1(x)
+        x = self.dropout(x)
+        x = self.fc2(x)
         return x
 
     def summary(self):
@@ -95,13 +105,12 @@ if __name__ == "__main__":
         prefix='',
         save_weights_only= True
     )
-    
+
     gpus = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = Binarized_MLP(device=device, mode="Stochastic")
+    model = Binarized_CONV(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
-    
     trainer = Trainer(checkpoint_callback=checkpoint_callback,
                       max_nb_epochs=1, train_percent_check=0.1)
     trainer.fit(model)
