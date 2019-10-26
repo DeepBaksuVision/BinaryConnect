@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 from utils.BinarizedLinear import BinarizedLinear
 
+
 class Binarized_MLP(pl.LightningModule):
     def __init__(self, device, mode="Stochastic"):
         super(Binarized_MLP, self).__init__()
@@ -75,11 +76,28 @@ class Binarized_MLP(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
+    from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+
+    weight_path = os.path.join(os.getcwd(), 'checkpoint')
+    if not os.path.exists(weight_path):
+        os.mkdir(weight_path)
+
+    checkpoint_callback = ModelCheckpoint(
+        filepath=weight_path,
+        save_best_only=False,
+        verbose=True,
+        monitor='val_loss',
+        mode='min',
+        prefix='',
+        save_weights_only= True
+    )
     gpus = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
-    trainer = Trainer(max_nb_epochs=1, train_percent_check=0.1)
+
+    trainer = Trainer(checkpoint_callback=checkpoint_callback,
+                      max_nb_epochs=1, train_percent_check=0.1)
     trainer.fit(model)
     trainer.test(model)
