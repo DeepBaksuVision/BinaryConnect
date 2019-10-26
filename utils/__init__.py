@@ -1,1 +1,1 @@
-from utils.BinarizedLinear import BinarizedLinear
+from utils.binarized_linear import BinarizedLinear
