@@ -22,7 +22,7 @@ class Binarized_MLP(pl.LightningModule):
         self.dropout = nn.Dropout(0.2)
         self.batch2 = nn.BatchNorm1d(512)
         self.fc3 = BinarizedLinear(512, 10, bias=False, mode=mode, device=device)
-
+        
     def forward(self, x):
         x = x.view(-1, 28 * 28)
         x = torch.sigmoid(self.fc1(x))

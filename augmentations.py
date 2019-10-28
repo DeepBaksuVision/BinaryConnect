@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
@@ -6,12 +7,12 @@ HorizontalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
     Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
     IAAAdditiveGaussianNoise, GaussNoise, MotionBlur, MedianBlur, IAAPiecewiseAffine,
     IAASharpen, IAAEmboss, RandomBrightnessContrast, Flip, OneOf, Compose
-
 )
 
 
-def aug(p=0.5):
+def aug(p=0.5, p1=random.uniform(0, 1)):
     return Compose([
+        HorizontalFlip(True),
         RandomRotate90(),
         Flip(),
         Transpose(),
@@ -51,9 +52,8 @@ def show_img(img, figsize=(8, 8)):
 
 if __name__ == "__main__":
 
-
     image = cv2.imread('dog.12473.jpg')
-    augmentation = aug(p=0.9)
+    augmentation = aug(p=0.5)
     data = {'image': image}
     augmented = augmentation(**data)
     image = augmented['image']
