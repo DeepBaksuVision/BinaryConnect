@@ -2,15 +2,14 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from albumentations import (
-HorizontalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
+    HorizontalFlip, IAAPerspective, ShiftScaleRotate, CLAHE, RandomRotate90,
     Transpose, ShiftScaleRotate, Blur, OpticalDistortion, GridDistortion, HueSaturationValue,
     IAAAdditiveGaussianNoise, GaussNoise, MotionBlur, MedianBlur, IAAPiecewiseAffine,
     IAASharpen, IAAEmboss, RandomBrightnessContrast, Flip, OneOf, Compose
-
 )
 
 
-def aug(p=0.5):
+def aug(p:dict):
     return Compose([
         RandomRotate90(),
         Flip(),
@@ -18,26 +17,26 @@ def aug(p=0.5):
         OneOf([
             IAAAdditiveGaussianNoise(),
             GaussNoise(),
-        ], p=0.2),
+        ], p=p["p0"]),
         OneOf([
-            MotionBlur(p=0.2),
-            MedianBlur(blur_limit=3, p=0.1),
-            Blur(blur_limit=3, p=0.1),
-        ], p=0.2),
-        ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=0.2),
+            MotionBlur(p=p["MotionBlur"]),
+            MedianBlur(blur_limit=3, p=p["MedianBlur"]),
+            Blur(blur_limit=3, p=p["Blur"]),
+        ], p=p["p1"]),
+        ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=p["ShiftScaleRotate"]),
         OneOf([
-            OpticalDistortion(p=0.3),
-            GridDistortion(p=0.1),
-            IAAPiecewiseAffine(p=0.3),
-        ], p=0.2),
+            OpticalDistortion(p=p["OpticalDistortion"]),
+            GridDistortion(p=p["GridDistortion"]),
+            IAAPiecewiseAffine(p=p["IAAPiecewiseAffine"]),
+        ], p=p["p2"]),
         OneOf([
             CLAHE(clip_limit=2),
             IAASharpen(),
             IAAEmboss(),
             RandomBrightnessContrast(),
-        ], p=0.3),
-        HueSaturationValue(p=0.3),
-    ], p=p)
+        ], p=p["p3"]),
+        HueSaturationValue(p=p["HueSaturationValue"]),
+    ], p=p['Compose'])
 
 
 def show_img(img, figsize=(8, 8)):
@@ -51,9 +50,10 @@ def show_img(img, figsize=(8, 8)):
 
 if __name__ == "__main__":
 
-
-    image = cv2.imread('dog.12473.jpg')
-    augmentation = aug(p=0.9)
+    image = cv2.imread('images.jpeg')
+    augmentation = aug({"p0": 0.2, "MotionBlur": 0.2, "MedianBlur": 0.1, "Blur": 0.1, "p1": 0.2, "ShiftScaleRotate": 0.2,
+                        "OpticalDistortion": 0.3, "GridDistortion": 0.1, "IAAPiecewiseAffine": 0.3, "p2": 0.2, "p3": 0.3,
+                        "HueSaturationValue": 0.3, "Compose": 0.5})
     data = {'image': image}
     augmented = augmentation(**data)
     image = augmented['image']
