@@ -1,4 +1,4 @@
-import numpy as np
+import json
 import cv2
 from matplotlib import pyplot as plt
 from albumentations import (
@@ -9,34 +9,38 @@ from albumentations import (
 )
 
 
-def aug(p:dict):
+def aug(config:{}, p=0.5):
     return Compose([
-        RandomRotate90(),
+        HorizontalFlip(True),
+        RandomRotate90(True),
         Flip(),
         Transpose(),
         OneOf([
             IAAAdditiveGaussianNoise(),
             GaussNoise(),
-        ], p=p["p0"]),
+        ], p=0.2),
         OneOf([
-            MotionBlur(p=p["MotionBlur"]),
-            MedianBlur(blur_limit=3, p=p["MedianBlur"]),
-            Blur(blur_limit=3, p=p["Blur"]),
-        ], p=p["p1"]),
-        ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=p["ShiftScaleRotate"]),
+
+            MotionBlur(p=config["MotionBlur"]),
+            MedianBlur(blur_limit=config["blur_limit"], p=0.1),
+            Blur(blur_limit=config["blur_limit"], p=0.1),
+        ], p=0.2),
+        ShiftScaleRotate(shift_limit=config["shift_limit"], scale_limit=config['scale_limit'],
+                         rotate_limit=config["rotate_limit"], p=0.2),
         OneOf([
-            OpticalDistortion(p=p["OpticalDistortion"]),
-            GridDistortion(p=p["GridDistortion"]),
-            IAAPiecewiseAffine(p=p["IAAPiecewiseAffine"]),
-        ], p=p["p2"]),
+            OpticalDistortion(p=0.3),
+            GridDistortion(p=0.1),
+            IAAPiecewiseAffine(p=0.3),
+        ], p=0.2),
         OneOf([
-            CLAHE(clip_limit=2),
+            CLAHE(clip_limit=config["clip_limit"]),
             IAASharpen(),
             IAAEmboss(),
             RandomBrightnessContrast(),
-        ], p=p["p3"]),
-        HueSaturationValue(p=p["HueSaturationValue"]),
-    ], p=p['Compose'])
+
+        ], p=0.3),
+        HueSaturationValue(p=config["HueSaturationValue"]),
+    ], p=p)
 
 
 def show_img(img, figsize=(8, 8)):
@@ -48,12 +52,23 @@ def show_img(img, figsize=(8, 8)):
     plt.imshow(img)
 
 
-if __name__ == "__main__":
+# with open('aug_config.json') as json_file:
+#     json_data = json.load(json_file)
+# print(json_data['MotionBlur'])
 
-    image = cv2.imread('images.jpeg')
-    augmentation = aug({"p0": 0.2, "MotionBlur": 0.2, "MedianBlur": 0.1, "Blur": 0.1, "p1": 0.2, "ShiftScaleRotate": 0.2,
-                        "OpticalDistortion": 0.3, "GridDistortion": 0.1, "IAAPiecewiseAffine": 0.3, "p2": 0.2, "p3": 0.3,
-                        "HueSaturationValue": 0.3, "Compose": 0.5})
+if __name__ == "__main__":
+    image = cv2.imread('dog.12473.jpg')
+    config = {
+      "MotionBlur": 0.2,
+      "blur_limit": 3,
+      "MedianBlur": 0.1,
+      "shift_limit": 0.0625,
+      "scale_limit": 0.2,
+      "rotate_limit": 45,
+      "clip_limit": 2,
+      "HueSaturationValue": 0.3
+        }
+    augmentation = aug(config)
     data = {'image': image}
     augmented = augmentation(**data)
     image = augmented['image']
