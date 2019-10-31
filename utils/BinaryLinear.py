@@ -32,7 +32,11 @@ class BinaryLinear(torch.nn.Linear):
         return weight.sign()
 
     @staticmethod
+<<<<<<< HEAD
+    def stochastic(weight: torch.tensor) -> torch.tensor:
+=======
     def stocastic(weight: torch.tensor) -> torch.tensor:
+>>>>>>> upstream/develop
         p = torch.sigmoid(weight)
         uniform_matrix = torch.empty(p.shape).uniform_(0,1)
         bin_weight = (p >= uniform_matrix).type(torch.float32)

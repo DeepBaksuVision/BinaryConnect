@@ -54,7 +54,7 @@ class BinarizedConv2d(torch.nn.Conv2d):
             bin_weight = weight.sign()
         return bin_weight
 
-    def stocastic(self, weight: torch.tensor) -> torch.tensor:
+    def stochastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
             uniform_matrix = torch.empty(p.shape).uniform_(0, 1)

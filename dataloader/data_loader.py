@@ -2,6 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
+
 def data_loader(dataset="CIFAR-10", batch_size = 16):
 
     if dataset == "CIFAR-10":

@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 
+from augmentations import aug
 from torchsummary import summary
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -63,11 +64,11 @@ class Binarized_MLP(pl.LightningModule):
 
     @pl.data_loader
     def train_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=128)
+        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=aug()), batch_size=128)
 
     @pl.data_loader
     def val_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=32)
+        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=aug()), batch_size=32)
 
     @pl.data_loader
     def test_dataloader(self):
