@@ -8,11 +8,7 @@ from torchsummary import summary
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
-<<<<<<< HEAD
-from utils.binarized_linear import BinarizedLinear
-=======
-from utils.BinarizedLinear import BinarizedLinear
->>>>>>> develop
+from layers.binarized_linear import BinarizedLinear
 
 
 class Binarized_MLP(pl.LightningModule):
