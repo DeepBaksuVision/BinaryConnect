@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class BinaryLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, bias=True, mode="Stocastic"):
+    def __init__(self, in_features, out_features, bias=True, mode="Stochastic"):
         super().__init__(in_features, out_features, bias)
         self.mode = mode
         self.bin_weight = self.weight_binarization(self.weight, self.mode)
@@ -17,8 +17,8 @@ class BinaryLinear(torch.nn.Linear):
 
     def weight_binarization(self, weight: torch.tensor, mode:str):
         with torch.set_grad_enabled(False):
-            if mode == "Stocastic":
-                bin_weight = self.stocastic(weight)
+            if mode == "Stochastic":
+                bin_weight = self.stochastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
             else:
@@ -32,7 +32,7 @@ class BinaryLinear(torch.nn.Linear):
         return weight.sign()
 
     @staticmethod
-    def stocastic(weight: torch.tensor) -> torch.tensor:
+    def stochastic(weight: torch.tensor) -> torch.tensor:
         p = torch.sigmoid(weight)
         uniform_matrix = torch.empty(p.shape).uniform_(0,1)
         bin_weight = (p >= uniform_matrix).type(torch.float32)

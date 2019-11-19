@@ -120,15 +120,15 @@ if __name__ == "__main__":
         monitor='val_loss',
         mode='min',
         prefix='',
-        save_weights_only= True
+        save_weights_only=True
     )
-    
+
     gpus = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Binarized_MLP(device=device, mode="Stochastic")
     model.to(device)
     model.summary()
-    
+
     trainer = Trainer(checkpoint_callback=checkpoint_callback,
                       max_nb_epochs=5, train_percent_check=0.1)
     trainer.fit(model)
