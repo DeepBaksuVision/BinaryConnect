@@ -1,11 +1,30 @@
 import copy
 import torch
-import torch.nn.functional as F
 
-class BinarizedLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, device: torch.device, bias=True, mode="Stochastic"):
-        super().__init__(in_features, out_features, bias)
+class BinarizedConv2d(torch.nn.Conv2d):
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 device: torch.device,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True,
+                 padding_mode='zeros',
+                 mode="Stochastic"):
+        super().__init__(in_channels,
+                         out_channels,
+                         kernel_size,
+                         stride,
+                         padding,
+                         dilation,
+                         groups,
+                         bias,
+                         padding_mode)
         self.mode = mode
         self.device = device
         self.bin_weight = self.weight_binarization(self.weight.data.to('cpu'), self.mode)
@@ -15,12 +34,13 @@ class BinarizedLinear(torch.nn.Linear):
         self.weight.data = self.clipping_weight(weight).to(self.device)
         self.bin_weight = self.weight_binarization(weight, self.mode)
         self.bin_weight = self.bin_weight.to(self.device)
-        return F.linear(input, self.bin_weight, self.bias)
 
-    def weight_binarization(self, weight: torch.tensor, mode:str):
+        return self.conv2d_forward(input, self.bin_weight)
+
+    def weight_binarization(self, weight: torch.tensor, mode: str):
         with torch.set_grad_enabled(False):
             if mode == "Stochastic":
-                bin_weight = self.stocastic(weight)
+                bin_weight = self.stochastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
             else:
@@ -32,14 +52,15 @@ class BinarizedLinear(torch.nn.Linear):
     def deterministic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             bin_weight = weight.sign()
+            bin_weight[bin_weight == 0] = 1
         return bin_weight
 
     def stochastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
-            uniform_matrix = torch.empty(p.shape).uniform_(0,1)
+            uniform_matrix = torch.empty(p.shape).uniform_(0, 1)
             bin_weight = (p >= uniform_matrix).type(torch.float32)
-            bin_weight[bin_weight==0] = -1
+            bin_weight[bin_weight == 0] = -1
         return bin_weight
 
     def cp_bin_grad_to_real_grad_hook(self, grad):
@@ -49,7 +70,7 @@ class BinarizedLinear(torch.nn.Linear):
         grad = grad.to(self.device)
         self.weight.grad = copy.deepcopy(grad)
 
-    def clipping_weight(self, weight:torch.tensor) -> torch.tensor:
+    def clipping_weight(self, weight: torch.tensor) -> torch.tensor:
         with torch.set_grad_enabled(False):
             weight = torch.clamp(weight, -1, 1)
         weight.requires_grad = True
@@ -67,21 +88,24 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = BinarizedLinear(28*28, 10, bias=False, mode="Stochastic", device=device)
+    model = BinarizedConv2d(in_channels=1,
+                            out_channels=10,
+                            kernel_size=28,
+                            bias=False,
+                            mode="Stochastic",
+                            device=device)
     model.to(device)
-    dataloader = DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=1)
+    dataloader = DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()),
+                            batch_size=1)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     for i, (data, target) in tqdm(enumerate(dataloader, 0), total=len(dataloader)):
         optimizer.zero_grad()
-        data = data.view(dataloader.batch_size, -1)
         data = data.to(device)
         target = target.to(device)
-        
         output = model(data)
+        output = output.view(dataloader.batch_size, -1)
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
         print("Loss : {}".format(loss))
-
-
