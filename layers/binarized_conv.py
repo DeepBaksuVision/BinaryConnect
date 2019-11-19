@@ -40,7 +40,7 @@ class BinarizedConv2d(torch.nn.Conv2d):
     def weight_binarization(self, weight: torch.tensor, mode: str):
         with torch.set_grad_enabled(False):
             if mode == "Stochastic":
-                bin_weight = self.stocastic(weight)
+                bin_weight = self.stochastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
             else:
@@ -52,9 +52,10 @@ class BinarizedConv2d(torch.nn.Conv2d):
     def deterministic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             bin_weight = weight.sign()
+            bin_weight[bin_weight == 0] = 1
         return bin_weight
 
-    def stocastic(self, weight: torch.tensor) -> torch.tensor:
+    def stochastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
             uniform_matrix = torch.empty(p.shape).uniform_(0, 1)

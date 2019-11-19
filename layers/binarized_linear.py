@@ -2,6 +2,7 @@ import copy
 import torch
 import torch.nn.functional as F
 
+
 class BinarizedLinear(torch.nn.Linear):
 
     def __init__(self, in_features, out_features, device: torch.device, bias=True, mode="Stochastic"):
@@ -20,7 +21,7 @@ class BinarizedLinear(torch.nn.Linear):
     def weight_binarization(self, weight: torch.tensor, mode:str):
         with torch.set_grad_enabled(False):
             if mode == "Stochastic":
-                bin_weight = self.stocastic(weight)
+                bin_weight = self.stochastic(weight)
             elif mode == "Deterministic":
                 bin_weight = self.deterministic(weight)
             else:
@@ -32,14 +33,15 @@ class BinarizedLinear(torch.nn.Linear):
     def deterministic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             bin_weight = weight.sign()
+            bin_weight[bin_weight == 0] = 1
         return bin_weight
 
-    def stocastic(self, weight: torch.tensor) -> torch.tensor:
+    def stochastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
-            uniform_matrix = torch.empty(p.shape).uniform_(0,1)
+            uniform_matrix = torch.empty(p.shape).uniform_(0, 1)
             bin_weight = (p >= uniform_matrix).type(torch.float32)
-            bin_weight[bin_weight==0] = -1
+            bin_weight[bin_weight == 0] = -1
         return bin_weight
 
     def cp_bin_grad_to_real_grad_hook(self, grad):
