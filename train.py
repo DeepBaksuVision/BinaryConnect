@@ -1,7 +1,7 @@
+import hydra
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from dataloader.data_loader import data_loader
 from tqdm import tqdm
 import argparse
 from models.conv import CNN
@@ -24,7 +24,7 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
                 epoch, i * len(data), len(train_loader.dataset),
                        100. * i / len(train_loader), loss.item()))
 
-
+@hydra.main()
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='MLP')

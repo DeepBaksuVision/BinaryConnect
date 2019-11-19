@@ -7,47 +7,128 @@ import torchvision.transforms as transforms
 from torchsummary import summary
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
-from torchvision.datasets import MNIST
-from utils.binarized_conv import BinarizedConv2d
-from utils.binarized_linear import BinarizedLinear
+from torchvision.datasets import MNIST, CIFAR10
+from layers.binarized_conv import BinarizedConv2d
+from layers.binarized_linear import BinarizedLinear
 
 
 class Binarized_CONV(pl.LightningModule):
     def __init__(self, device, mode="Stochastic"):
         super(Binarized_CONV, self).__init__()
-        self.conv1 = BinarizedConv2d(in_channels=1,
-                                     out_channels=64,
-                                     kernel_size=7,
-                                     bias=False,
-                                     mode="Stochastic",
-                                     device=device)
-        self.dropout = nn.Dropout(0.2)
-        self.conv2 = BinarizedConv2d(in_channels=64,
+
+        self.conv1 = BinarizedConv2d(in_channels=3,
                                      out_channels=128,
-                                     kernel_size=7,
-                                     bias=False,
-                                     mode="Stochastic",
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
                                      device=device)
-        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = BinarizedLinear(8 * 8 * 128, 512, bias=False, mode=mode, device=device)
-        self.dropout = nn.Dropout(0.2)
-        self.fc2 = BinarizedLinear(512, 10, bias=False, mode=mode, device=device)
+        self.batch1 = nn.BatchNorm2d(128)
+
+        self.conv2 = BinarizedConv2d(in_channels=128,
+                                     out_channels=128,
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
+                                     device=device)
+        self.batch2 = nn.BatchNorm2d(128)
+
+        self.conv3 = BinarizedConv2d(in_channels=128,
+                                     out_channels=256,
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
+                                     device=device)
+        self.batch3 = nn.BatchNorm2d(256)
+
+        self.conv4 = BinarizedConv2d(in_channels=256,
+                                     out_channels=256,
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
+                                     device=device)
+        self.batch4 = nn.BatchNorm2d(256)
+
+        self.conv5 = BinarizedConv2d(in_channels=256,
+                                     out_channels=512,
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
+                                     device=device)
+        self.batch5 = nn.BatchNorm2d(512)
+
+        self.conv6 = BinarizedConv2d(in_channels=512,
+                                     out_channels=512,
+                                     kernel_size=3,
+                                     bias=True,
+                                     mode=mode,
+                                     padding=1,
+                                     device=device)
+        self.batch6 = nn.BatchNorm2d(512)
+
+        # ??
+
+        self.fc1 = BinarizedLinear(512 * 4 * 4, 1024, bias=True, mode=mode, device=device)
+        self.fc2 = BinarizedLinear(1024, 1024, bias=True, mode=mode, device=device)
+
+        self.final = BinarizedLinear(1024, 10, bias=True, mode=mode, device=device)
+
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
+        self.sigmoid = nn.Sigmoid()
+        self.maxpool = nn.MaxPool2d(kernel_size=2,
+                                    stride=2)
 
     def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.dropout(x)
-        x = self.relu(self.conv2(x))
+
+        x = self.conv1(x)
+        x = self.batch1(x)
+        x = self.relu(x)
+
+        x = self.conv2(x)
+        x = self.batch2(x)
+        x = self.relu(x)
+
         x = self.maxpool(x)
-        x = x.reshape(x.shape[0], -1)
+
+        x = self.conv3(x)
+        x = self.batch3(x)
+        x = self.relu(x)
+
+        x = self.conv4(x)
+        x = self.batch4(x)
+        x = self.relu(x)
+
+        x = self.maxpool(x)
+
+        x = self.conv5(x)
+        x = self.batch5(x)
+        x = self.relu(x)
+
+        x = self.conv6(x)
+        x = self.batch6(x)
+        x = self.relu(x)
+
+        x = self.maxpool(x)
+
+        x = x.view(x.shape[0], -1)
+
         x = self.fc1(x)
-        x = self.dropout(x)
+        x = self.tanh(x)
+
         x = self.fc2(x)
+        x = self.tanh(x)
+
+        x = self.final(x)
+
         return x
 
     def summary(self):
-        summary(self, (1, 28, 28))
+        summary(self, (3, 32, 32))
 
     def training_step(self, batch, batch_nb):
         x, y = batch
@@ -77,15 +158,23 @@ class Binarized_CONV(pl.LightningModule):
 
     @pl.data_loader
     def train_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=128)
+        return DataLoader(CIFAR10(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=50)
 
     @pl.data_loader
     def val_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=32)
+        return DataLoader(CIFAR10(os.getcwd(),
+                                  train=True,
+                                  download=True,
+                                  transform=transforms.ToTensor()),
+                          batch_size=32)
 
     @pl.data_loader
     def test_dataloader(self):
-        return DataLoader(MNIST(os.getcwd(), train=False, download=True, transform=transforms.ToTensor()), batch_size=32)
+        return DataLoader(CIFAR10(os.getcwd(),
+                                  train=False,
+                                  download=True,
+                                  transform=transforms.ToTensor()),
+                          batch_size=10000)
 
 
 if __name__ == "__main__":
@@ -115,3 +204,4 @@ if __name__ == "__main__":
                       max_nb_epochs=1, train_percent_check=0.1)
     trainer.fit(model)
     trainer.test(model)
+
