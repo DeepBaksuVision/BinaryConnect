@@ -8,8 +8,8 @@ from torchsummary import summary
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
-from utils.binarized_conv import BinarizedConv2d
-from utils.binarized_linear import BinarizedLinear
+from layers.binarized_conv import BinarizedConv2d
+from layers.binarized_linear import BinarizedLinear
 
 
 class Binarized_CONV(pl.LightningModule):
