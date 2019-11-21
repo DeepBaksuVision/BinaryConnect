@@ -39,8 +39,8 @@ class BinarizedLinear(torch.nn.Linear):
     def stochastic(self, weight: torch.tensor) -> torch.tensor:
         with torch.no_grad():
             p = torch.sigmoid(weight)
-            uniform_matrix = torch.empty(p.shape).uniform_(0, 1)
-            bin_weight = (p >= uniform_matrix).type(torch.float32).to(self.device)
+            uniform_matrix = torch.empty(p.shape).uniform_(0, 1).to(self.device)
+            bin_weight = (p >= uniform_matrix).type(torch.float32)
             bin_weight[bin_weight == 0] = -1
             bin_weight
         return bin_weight
