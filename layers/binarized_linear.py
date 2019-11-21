@@ -40,9 +40,9 @@ class BinarizedLinear(torch.nn.Linear):
         with torch.no_grad():
             p = torch.sigmoid(weight)
             uniform_matrix = torch.empty(p.shape).uniform_(0, 1)
-            bin_weight = (p >= uniform_matrix).type(torch.float32)
+            bin_weight = (p >= uniform_matrix).type(torch.float32).to(self.device)
             bin_weight[bin_weight == 0] = -1
-            bin_weight.to(self.device)
+            bin_weight
         return bin_weight
 
     def cp_bin_grad_to_real_grad_hook(self, grad):
