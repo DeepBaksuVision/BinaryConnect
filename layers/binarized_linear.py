@@ -12,7 +12,7 @@ class BinarizedLinear(torch.nn.Linear):
         self.bin_weight = self.weight_binarization(self.weight.data.to('cpu'), self.mode)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        weight = self.weight.data.to('cpu')
+        weight = self.weight
         self.weight.data = self.clipping_weight(weight).to(self.device)
         self.bin_weight = self.weight_binarization(weight, self.mode)
         self.bin_weight = self.bin_weight.to(self.device)
