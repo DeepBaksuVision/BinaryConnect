@@ -1,63 +1,24 @@
-import copy
+
 import torch
-import torch.nn.functional as F
+from utils.custom_op import binary_linear
 
 
 class BinarizedLinear(torch.nn.Linear):
 
-    def __init__(self, in_features, out_features, device: torch.device, bias=True, mode="Stochastic"):
+    def __init__(self, in_features, out_features, bias=False, mode="determistic"):
         super().__init__(in_features, out_features, bias)
         self.mode = mode
-        self.device = device
-        self.bin_weight = self.weight_binarization(self.weight.data.to('cpu'), self.mode)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        weight = self.weight
-        self.weight.data = self.clipping_weight(weight).to(self.device)
-        self.bin_weight = self.weight_binarization(weight, self.mode)
-        self.bin_weight = self.bin_weight.to(self.device)
-        return F.linear(input, self.bin_weight, self.bias)
+        if self.bias is not None:
+            return binary_linear(input, self.weight, self.bias)
+        return binary_linear(input, self.weight)
 
-    def weight_binarization(self, weight: torch.tensor, mode:str):
-        with torch.set_grad_enabled(False):
-            if mode == "Stochastic":
-                bin_weight = self.stochastic(weight)
-            elif mode == "Deterministic":
-                bin_weight = self.deterministic(weight)
-            else:
-                raise RuntimeError("{} is does not exist or not supported".format(mode))
-        bin_weight.requires_grad = True
-        bin_weight.register_hook(self.cp_bin_grad_to_real_grad_hook)
-        return bin_weight
-
-    def deterministic(self, weight: torch.tensor) -> torch.tensor:
-        with torch.no_grad():
-            bin_weight = weight.sign()
-            bin_weight[bin_weight == 0] = 1
-        return bin_weight
-
-    def stochastic(self, weight: torch.tensor) -> torch.tensor:
-        with torch.no_grad():
-            p = torch.sigmoid(weight)
-            uniform_matrix = torch.empty(p.shape).uniform_(0, 1).to(self.device)
-            bin_weight = (p >= uniform_matrix).type(torch.float32)
-            bin_weight[bin_weight == 0] = -1
-            bin_weight
-        return bin_weight
-
-    def cp_bin_grad_to_real_grad_hook(self, grad):
-        # if not using deepcopy
-        # you will be meet Error as
-        # `Can't detach views in-place. Use detach() instead`
-        grad = grad.to(self.device)
-        self.weight.grad = copy.deepcopy(grad)
-
-    def clipping_weight(self, weight:torch.tensor) -> torch.tensor:
-        with torch.set_grad_enabled(False):
-            weight = torch.clamp(weight, -1, 1)
-        weight.requires_grad = True
-
-        return weight
+    def reset_parameters(self):
+        # xavier initialization
+        torch.nn.init.xavier_normal(self.weight)
+        if self.bias is not None:
+            self.bias.data.fill_(0.01)
 
 
 if __name__ == "__main__":
@@ -70,7 +31,8 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = BinarizedLinear(28*28, 10, bias=False, mode="Stochastic", device=device)
+    model = BinarizedLinear(28*28, 10, bias=False, mode="determistic")
+    model.train()
     model.to(device)
     dataloader = DataLoader(MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor()), batch_size=1)
     criterion = nn.CrossEntropyLoss()
@@ -80,11 +42,22 @@ if __name__ == "__main__":
         data = data.view(dataloader.batch_size, -1)
         data = data.to(device)
         target = target.to(device)
-        
         output = model(data)
         loss = criterion(output, target)
+        print("Output : {}".format(output))
+        print("Model Weight Before")
+        print(model.weight)
         loss.backward()
         optimizer.step()
-        print("Loss : {}".format(loss))
+        print("Grad Func")
+        print(output.grad_fn)
+        print("---------")
+        print("Grad")
+        print(model.weight.grad)
+        print("---------")
+        print("Model Weight After")
+        print(model.weight)
+        print("---------")
+        break
 
 
